@@ -18,11 +18,6 @@ class DatabaseItem(
     val lore: List<String>?,
     val enchantments: Map<String, Int>?,
 ) {
-    fun deserializeFromJSON(json: String): List<DatabaseItem> {
-        val itemType = object : TypeToken<List<DatabaseItem>>() {}.type
-        return gson.fromJson(json, itemType)
-    }
-
     fun serializeToJSON(): String {
         return gson.toJson(this)
     }
@@ -42,21 +37,29 @@ class DatabaseItem(
         return item
     }
 
-    fun fromItemStack(item: ItemStack): DatabaseItem {
-        val meta = item.itemMeta
-        val damage = if (meta is Damageable) meta.damage else 0
-        val displayName = meta.displayName
-        val lore = meta.lore
+    companion object {
+        fun deserializeFromJSON(json: String): DatabaseItem {
+            val itemType = object : TypeToken<DatabaseItem>() {}.type
 
-        val enchantmentsMap = meta.enchants.mapKeys { it.key.name }.toMap()
-        return DatabaseItem(
-            item.amount,
-            item.type.name,
-            damage,
-            displayName,
-            item.itemMeta.displayName,
-            lore,
-            enchantmentsMap
-        )
+            return gson.fromJson(json, itemType)
+        }
+
+        fun fromItemStack(item: ItemStack): DatabaseItem {
+            val meta = item.itemMeta
+            val damage = if (meta is Damageable) meta.damage else 0
+            val displayName = meta.displayName
+            val lore = meta.lore
+
+            val enchantmentsMap = meta.enchants.mapKeys { it.key.name }.toMap()
+            return DatabaseItem(
+                item.amount,
+                item.type.name,
+                damage,
+                displayName,
+                item.itemMeta.displayName,
+                lore,
+                enchantmentsMap
+            )
+        }
     }
 }

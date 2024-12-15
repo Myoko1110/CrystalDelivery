@@ -1,6 +1,7 @@
 package earth.crystalmc.crystalDelivery
 
 import earth.crystalmc.crystalDelivery.command.DeliveryCommandExecutor
+import earth.crystalmc.crystalDelivery.delivery.DeliveryScheduler
 import earth.crystalmc.crystalDelivery.utils.DatabaseManager
 import earth.crystalmc.crystalDelivery.utils.Message
 import org.bukkit.plugin.Plugin
@@ -50,8 +51,11 @@ class CrystalDelivery : JavaPlugin() {
 
         // database
         databaseManager = DatabaseManager()
-        
-        this.logger.info(Message.pluginEnabled.toString())
+
+        // scheduler
+        DeliveryScheduler().runTaskTimer(this, 0, 20 * 60)
+
+        this.logger.info(Message.PluginEnabled.toString())
     }
 
     override fun onDisable() {
