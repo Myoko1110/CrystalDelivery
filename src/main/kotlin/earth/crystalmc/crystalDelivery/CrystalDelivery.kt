@@ -1,6 +1,7 @@
 package earth.crystalmc.crystalDelivery
 
 import earth.crystalmc.crystalDelivery.command.DeliveryCommandExecutor
+import earth.crystalmc.crystalDelivery.utils.DatabaseManager
 import earth.crystalmc.crystalDelivery.utils.Message
 import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.java.JavaPlugin
@@ -14,14 +15,19 @@ class CrystalDelivery : JavaPlugin() {
     companion object {
         lateinit var plugin: Plugin private set
         lateinit var langData: Properties private set
+        lateinit var databaseManager: DatabaseManager private set
     }
 
     override fun onEnable() {
         plugin = this
 
+        // command
         getCommand("delivery")?.setExecutor(DeliveryCommandExecutor())
+
+        // config
         saveDefaultConfig()
 
+        // language
         val languageFile = File(plugin.dataFolder, "message.properties")
         if (!languageFile.exists()) {
             var src = plugin.getResource(Locale.getDefault().toString() + ".properties")
@@ -33,7 +39,6 @@ class CrystalDelivery : JavaPlugin() {
                 e.printStackTrace()
             }
         }
-
         try {
             val inputStreamReader = InputStreamReader(FileInputStream(languageFile), StandardCharsets.UTF_8)
             val bufferedReader = BufferedReader(inputStreamReader)
@@ -43,7 +48,9 @@ class CrystalDelivery : JavaPlugin() {
             e.printStackTrace()
         }
 
-
+        // database
+        databaseManager = DatabaseManager()
+        
         this.logger.info(Message.pluginEnabled.toString())
     }
 

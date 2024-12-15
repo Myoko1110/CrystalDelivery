@@ -1,10 +1,14 @@
 package earth.crystalmc.crystalDelivery.command
 
+import org.bukkit.Bukkit
+import org.bukkit.Material
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabExecutor
 import org.bukkit.entity.Player
+import org.bukkit.inventory.Inventory
+import org.bukkit.inventory.ItemStack
 
 class DeliveryCommandExecutor : CommandExecutor, TabExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
@@ -19,8 +23,7 @@ class DeliveryCommandExecutor : CommandExecutor, TabExecutor {
 
         when (args[0]) {
             "send" -> {
-                sender.sendMessage("create")
-                return true
+
             }
             else -> {
                 sender.sendMessage("存在しない引数です")
