@@ -4,4 +4,20 @@ main: earth.crystalmc.crystalDelivery.CrystalDelivery
 api-version: '1.20'
 commands:
   delivery:
-    usage: /<command>
+    permissions:
+      crystaldelivery.*:
+        description: CrystalDelivery のコマンドを使用するすべての権利を与えます
+        children:
+          crystaldelivery.delivery: true
+          crystaldelivery.send: true
+          crystaldelivery.post: true
+          crystaldelivery.redelivery: true
+          crystaldelivery.reload: true
+      crystaldelivery.send:
+        default: true
+      crystaldelivery.post:
+        default: true
+      crystaldelivery.redelivery:
+        default: true
+      crystaldelivery.reload:
+        default: false

@@ -1,12 +1,11 @@
-package earth.crystalmc.crystalDelivery.utils
+package earth.crystalmc.crystalDelivery.util
 
 import earth.crystalmc.crystalDelivery.CrystalDelivery.Companion.plugin
-import earth.crystalmc.crystalDelivery.delivery.DatabaseItem
 import earth.crystalmc.crystalDelivery.delivery.Delivery
-import org.bukkit.Bukkit
+import earth.crystalmc.crystalDelivery.delivery.DeliveryFailedCode
 import org.bukkit.OfflinePlayer
 import java.sql.*
-import java.util.*
+
 
 class DatabaseManager {
     private lateinit var host: String
@@ -76,15 +75,15 @@ class DatabaseManager {
         val statement = connection.createStatement()
 
         // テーブル作成
-        statement.execute("CREATE TABLE IF NOT EXISTS delivery (id INT PRIMARY KEY AUTO_INCREMENT, sender VARCHAR(36), receiver VARCHAR(36), item JSON, delivered BOOLEAN DEFAULT FALSE, received BOOLEAN DEFAULT FALSE, created_at DATETIME)")
+        statement.execute("CREATE TABLE IF NOT EXISTS delivery (id INT PRIMARY KEY AUTO_INCREMENT, sender VARCHAR(36), recipient VARCHAR(36), item JSON, delivered BOOLEAN DEFAULT FALSE, received BOOLEAN DEFAULT FALSE, failed_code INTEGER DEFAULT NULL, created_at DATETIME)")
     }
 
-    fun addDelivery(sender: String, receiver: String, item: String, createdAt: Timestamp): Boolean {
+    fun addDelivery(sender: String, recipient: String, item: String, createdAt: Timestamp): Boolean {
         try {
             val statement =
-                connection.prepareStatement("INSERT INTO delivery (sender, receiver, item, created_at) VALUES (?, ?, ?, ?)")
+                connection.prepareStatement("INSERT INTO delivery (sender, recipient, item, created_at) VALUES (?, ?, ?, ?)")
             statement.setString(1, sender)
-            statement.setString(2, receiver)
+            statement.setString(2, recipient)
             statement.setString(3, item)
             statement.setTimestamp(4, createdAt)
 
@@ -97,53 +96,50 @@ class DatabaseManager {
 
     fun getValidDeliveries(): List<Delivery> {
         val statement = connection.createStatement()
-        val resultSet = statement.executeQuery("SELECT * FROM delivery WHERE delivered = FALSE AND received = FALSE")
+        val resultSet = statement.executeQuery("SELECT * FROM delivery WHERE delivered = FALSE AND received = FALSE AND failed_code IS NULL")
 
-        val deliveries = mutableListOf<Delivery>()
-
-        while (resultSet.next()) {
-            val id = resultSet.getInt("id")
-            val sender = Bukkit.getOfflinePlayer(UUID.fromString(resultSet.getString("sender")))
-            val receiver = Bukkit.getOfflinePlayer(UUID.fromString(resultSet.getString("receiver")))
-            val item = DatabaseItem.deserializeFromJSON(resultSet.getString("item")).toItemStack()
-            val delivered = resultSet.getBoolean("delivered")
-            val received = resultSet.getBoolean("received")
-            val createdAt = resultSet.getTimestamp("created_at")
-
-            deliveries.add(Delivery(id, sender, receiver, item, delivered, received, createdAt))
-        }
-
-        return deliveries
+        return Delivery.deserializeFromDatabase(resultSet)
     }
 
-    fun getValidDeliveriesFromPlayer(player: OfflinePlayer): List<Delivery> {
-        val statement = connection.prepareStatement("SELECT * FROM delivery WHERE delivered = TRUE AND received = FALSE AND receiver = ?")
+    fun getDeliveriesFromPlayer(player: OfflinePlayer): List<Delivery> {
+        val statement =
+            connection.prepareStatement("SELECT * FROM delivery WHERE (delivered = TRUE AND received = FALSE) OR (delivered = FALSE AND received = FALSE AND failed_code IS NOT NULL) AND recipient = ?")
         statement.setString(1, player.uniqueId.toString())
 
         val resultSet = statement.executeQuery()
-        val deliveries = mutableListOf<Delivery>()
-
-        while (resultSet.next()) {
-            val id = resultSet.getInt("id")
-            val sender = Bukkit.getOfflinePlayer(UUID.fromString(resultSet.getString("sender")))
-            val receiver = Bukkit.getOfflinePlayer(UUID.fromString(resultSet.getString("receiver")))
-            val item = DatabaseItem.deserializeFromJSON(resultSet.getString("item")).toItemStack()
-            val delivered = resultSet.getBoolean("delivered")
-            val received = resultSet.getBoolean("received")
-            val createdAt = resultSet.getTimestamp("created_at")
-
-            deliveries.add(Delivery(id, sender, receiver, item, delivered, received, createdAt))
-        }
-
-        return deliveries
+        return Delivery.deserializeFromDatabase(resultSet)
     }
 
-    fun updateDelivery(id: Int, delivered: Boolean, received: Boolean): Boolean {
+    fun getValidDeliveriesFromPlayer(player: OfflinePlayer): List<Delivery> {
+        val statement =
+            connection.prepareStatement("SELECT * FROM delivery WHERE delivered = TRUE AND received = FALSE AND failed_code IS NULL AND recipient = ?")
+        statement.setString(1, player.uniqueId.toString())
+
+        val resultSet = statement.executeQuery()
+        return Delivery.deserializeFromDatabase(resultSet)
+    }
+
+    fun getFailedDeliveriesFromPlayer(player: OfflinePlayer): List<Delivery> {
+        val statement =
+            connection.prepareStatement("SELECT * FROM delivery WHERE delivered = FALSE AND received = FALSE AND failed_code IS NOT NULL AND recipient = ?")
+        statement.setString(1, player.uniqueId.toString())
+
+        val resultSet = statement.executeQuery()
+        return Delivery.deserializeFromDatabase(resultSet)
+    }
+
+    fun updateDelivery(id: Int, delivered: Boolean, received: Boolean, failedCode: DeliveryFailedCode? = null): Boolean {
         try {
-            val statement = connection.prepareStatement("UPDATE delivery SET delivered = ?, received = ? WHERE id = ?")
+            val statement = connection.prepareStatement("UPDATE delivery SET delivered = ?, received = ?, failed_code = ? WHERE id = ?")
             statement.setBoolean(1, delivered)
             statement.setBoolean(2, received)
-            statement.setInt(3, id)
+            if (failedCode == null) {
+                statement.setObject(3, null)
+            } else {
+                statement.setInt(3, failedCode.code)
+            }
+
+            statement.setInt(4, id)
 
             return statement.executeUpdate() > 0
         } catch (e: SQLException) {

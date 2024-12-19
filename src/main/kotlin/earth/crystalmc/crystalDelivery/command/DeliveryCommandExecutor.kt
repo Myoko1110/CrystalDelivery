@@ -1,8 +1,11 @@
 package earth.crystalmc.crystalDelivery.command
 
-import earth.crystalmc.crystalDelivery.delivery.ReceiveGUI
-import earth.crystalmc.crystalDelivery.delivery.SendGUI
-import earth.crystalmc.crystalDelivery.utils.Message
+import earth.crystalmc.crystalDelivery.CrystalDelivery.Companion.databaseManager
+import earth.crystalmc.crystalDelivery.CrystalDelivery.Companion.loadMessages
+import earth.crystalmc.crystalDelivery.delivery.Delivery
+import earth.crystalmc.crystalDelivery.gui.ReceiveGUI
+import earth.crystalmc.crystalDelivery.gui.SendGUI
+import earth.crystalmc.crystalDelivery.util.Message
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -10,12 +13,9 @@ import org.bukkit.command.CommandSender
 import org.bukkit.command.TabExecutor
 import org.bukkit.entity.Player
 
+
 class DeliveryCommandExecutor : CommandExecutor, TabExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        if (sender !is Player) {
-            sender.sendMessage(Message.CommandPlayerOnly.toString())
-            return false
-        }
         if (args.isEmpty()) {
             sender.sendMessage(Message.CommandSyntaxError.toString())
             return false
@@ -23,14 +23,64 @@ class DeliveryCommandExecutor : CommandExecutor, TabExecutor {
 
         when (args[0]) {
             "send" -> {
+                if (args.size < 2) {
+                    sender.sendMessage(Message.CommandSyntaxError.toString())
+                }
+                if (sender !is Player) {
+                    sender.sendMessage(Message.CommandPlayerOnly.toString())
+                }
+                if (!sender.hasPermission("crystaldelivery.send")) {
+                    sender.sendMessage(Message.CommandDenied.toString())
+                }
+
                 val receiver = Bukkit.getOfflinePlayer(args[1])
 
-                SendGUI(sender, receiver, 0.0).open()
+                SendGUI(sender as Player, receiver).open()
                 return true
             }
 
             "post" -> {
+                if (sender !is Player) {
+                    sender.sendMessage(Message.CommandPlayerOnly.toString())
+                    return false
+                }
+                if (!sender.hasPermission("crystaldelivery.post")) {
+                    sender.sendMessage(Message.CommandDenied.toString())
+                }
+
                 ReceiveGUI(sender).open()
+                return true
+            }
+
+            "redelivery" -> {
+                if (sender !is Player) {
+                    sender.sendMessage(Message.CommandPlayerOnly.toString())
+                    return false
+                }
+                if (!sender.hasPermission("crystaldelivery.redelivery")) {
+                    sender.sendMessage(Message.CommandDenied.toString())
+                }
+
+                val results = Delivery.getFailedFromPlayer(sender).map {
+                    it.failedCode = null
+                    it.update()
+                }
+                if (results.any { !it }) {
+                    sender.sendMessage(Message.RedeliveryError.toString())
+                    return false
+                }
+
+                sender.sendMessage(Message.RedeliverySuccess.toString())
+            }
+
+            "reload" -> {
+                if (!sender.hasPermission("crystaldelivery.reload")) {
+                    sender.sendMessage(Message.CommandDenied.toString())
+                }
+
+                databaseManager.initialize()
+                loadMessages()
+                sender.sendMessage(Message.ReloadSuccess.toString())
                 return true
             }
 
@@ -47,11 +97,16 @@ class DeliveryCommandExecutor : CommandExecutor, TabExecutor {
         alias: String,
         args: Array<out String>
     ): MutableList<String> {
-        if (args.size == 1) {
-            return mutableListOf("send", "post")
-        } else if (args.size == 2 && args[0] == "send") {
-            return Bukkit.getOnlinePlayers().map { it.name }.toMutableList()
+        return when {
+            args.size == 1 -> listOf(
+                "send",
+                "post",
+                "redelivery",
+                "reload"
+            ).filter { sender.hasPermission("crystaldelivery.$it") }.toMutableList()
+
+            args.size == 2 && args[0] == "send" -> Bukkit.getOnlinePlayers().map { it.name }.toMutableList()
+            else -> mutableListOf()
         }
-        return mutableListOf()
     }
 }
