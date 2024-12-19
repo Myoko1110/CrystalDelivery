@@ -2,6 +2,7 @@ package earth.crystalmc.crystalDelivery.command
 
 import earth.crystalmc.crystalDelivery.CrystalDelivery.Companion.databaseManager
 import earth.crystalmc.crystalDelivery.CrystalDelivery.Companion.loadMessages
+import earth.crystalmc.crystalDelivery.CrystalDelivery.Companion.plugin
 import earth.crystalmc.crystalDelivery.delivery.Delivery
 import earth.crystalmc.crystalDelivery.gui.ReceiveGUI
 import earth.crystalmc.crystalDelivery.gui.SendGUI
@@ -25,12 +26,15 @@ class DeliveryCommandExecutor : CommandExecutor, TabExecutor {
             "send" -> {
                 if (args.size < 2) {
                     sender.sendMessage(Message.CommandSyntaxError.toString())
+                    return false
                 }
                 if (sender !is Player) {
                     sender.sendMessage(Message.CommandPlayerOnly.toString())
+                    return false
                 }
                 if (!sender.hasPermission("crystaldelivery.send")) {
                     sender.sendMessage(Message.CommandDenied.toString())
+                    return false
                 }
 
                 val receiver = Bukkit.getOfflinePlayer(args[1])
@@ -46,6 +50,7 @@ class DeliveryCommandExecutor : CommandExecutor, TabExecutor {
                 }
                 if (!sender.hasPermission("crystaldelivery.post")) {
                     sender.sendMessage(Message.CommandDenied.toString())
+                    return false
                 }
 
                 ReceiveGUI(sender).open()
@@ -59,6 +64,7 @@ class DeliveryCommandExecutor : CommandExecutor, TabExecutor {
                 }
                 if (!sender.hasPermission("crystaldelivery.redelivery")) {
                     sender.sendMessage(Message.CommandDenied.toString())
+                    return false
                 }
 
                 val results = Delivery.getFailedFromPlayer(sender).map {
@@ -76,10 +82,13 @@ class DeliveryCommandExecutor : CommandExecutor, TabExecutor {
             "reload" -> {
                 if (!sender.hasPermission("crystaldelivery.reload")) {
                     sender.sendMessage(Message.CommandDenied.toString())
+                    return false
                 }
 
                 databaseManager.initialize()
                 loadMessages()
+                plugin.saveDefaultConfig()
+
                 sender.sendMessage(Message.ReloadSuccess.toString())
                 return true
             }

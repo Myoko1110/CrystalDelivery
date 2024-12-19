@@ -1,7 +1,9 @@
 package earth.crystalmc.crystalDelivery.gui
 
+import earth.crystalmc.crystalDelivery.CrystalDelivery.Companion.econ
 import earth.crystalmc.crystalDelivery.CrystalDelivery.Companion.plugin
 import earth.crystalmc.crystalDelivery.delivery.Delivery
+import earth.crystalmc.crystalDelivery.delivery.ShippingFee
 import earth.crystalmc.crystalDelivery.util.Message
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -87,6 +89,9 @@ class SendGUI(private val sender: Player, private val recipient: OfflinePlayer) 
                         17 -> {
                             // 配達するアイテムが指定されていない場合
                             val items = (0..8).mapNotNull { inventory.getItem(it) }
+
+                            val numberOfItems = items.sumOf { it.amount }
+                            val fee = ShippingFee.get(numberOfItems)
                             if (items.isEmpty()) {
                                 sender.sendMessage(Message.SendEmptyError.toString())
 
@@ -99,10 +104,20 @@ class SendGUI(private val sender: Player, private val recipient: OfflinePlayer) 
                                 sender.sendMessage(Message.SendUnableShulkerError.toString())
                                 sender.inventory.addItem(*items.toTypedArray())
 
+                            }else if (econ!!.getBalance(sender) < fee) {
+                                sender.sendMessage(Message.SendNoEnoughMoneyError.toString())
+                                Message.sendNoEnoughMoneyErrorConsole(sender, recipient)
+
                             } else {
+
                                 // TODO: DBへのアクセスが多いので、一度に複数の配達を更新するようにする
                                 val msg = if (Delivery.save(sender, recipient, items)) {
                                     sender.sendMessage(Message.SendSuccess.toString())
+
+
+
+                                    econ!!.withdrawPlayer(sender, fee)
+
                                     Message.sendSuccessConsole(sender, recipient)
                                 } else {
                                     sender.sendMessage(Message.SendError.toString())

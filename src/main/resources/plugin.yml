@@ -2,6 +2,9 @@ name: CrystalDelivery
 version: '1.0-SNAPSHOT'
 main: earth.crystalmc.crystalDelivery.CrystalDelivery
 api-version: '1.20'
+author: myoko_1110
+depend:
+  - Vault
 commands:
   delivery:
     permissions:

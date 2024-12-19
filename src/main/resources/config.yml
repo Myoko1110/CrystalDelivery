@@ -1,6 +1,25 @@
 # お届け時間（分）
 delivery_time: 1
 
+# 一定個数までは定額、以後比例
+shipping_fee:
+  type: "FixedWithLimit"
+  limit: 5
+  fixed: 200
+  per_item: 120
+
+# 一定額
+#shipping_fee:
+#  type: "Flat"
+#  fee: 120
+
+# アイテム数に比例
+#shipping_fee:
+#  type: "PerItem"
+#  fixed: 200
+#  per_item: 120
+
+# MySQL
 database:
   host: localhost
   port: 3306

@@ -7,6 +7,7 @@ import org.bukkit.entity.Player
 
 enum class Message(private val usePrefix: UsePrefix? = null) {
     PluginEnabled,
+    NoVault,
     ReloadSuccess(UsePrefix.InfoPrefix),
 
     CommandPlayerOnly(UsePrefix.ErrorPrefix),
@@ -24,6 +25,7 @@ enum class Message(private val usePrefix: UsePrefix? = null) {
     SendError(UsePrefix.ErrorPrefix),
     SendEmptyError(UsePrefix.ErrorPrefix),
     SendUnableShulkerError(UsePrefix.ErrorPrefix),
+    SendNoEnoughMoneyError(UsePrefix.ErrorPrefix),
 
     DeliverySuccess(UsePrefix.InfoPrefix),
     DeliveryFailedMailboxFull(UsePrefix.ErrorPrefix),
@@ -55,6 +57,13 @@ enum class Message(private val usePrefix: UsePrefix? = null) {
 
         fun sendErrorConsole(sender: Player, receiver: OfflinePlayer): String {
             return langData.getProperty("SendErrorConsole")
+                ?.replace("%sender%", sender.name)
+                ?.replace("%recipient%", receiver.name ?: langData.getProperty("UnknownPlayer").orEmpty())
+                ?.let { replaceColor(it) }.orEmpty()
+        }
+
+        fun sendNoEnoughMoneyErrorConsole(sender: Player, receiver: OfflinePlayer): String {
+            return langData.getProperty("SendNoEnoughMoneyErrorConsole")
                 ?.replace("%sender%", sender.name)
                 ?.replace("%recipient%", receiver.name ?: langData.getProperty("UnknownPlayer").orEmpty())
                 ?.let { replaceColor(it) }.orEmpty()
