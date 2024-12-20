@@ -1,5 +1,6 @@
 package earth.crystalmc.crystalDelivery.delivery
 
+
 enum class DeliveryFailedCode(val code: Int) {
     MailboxFull(101);
 

@@ -6,6 +6,7 @@ import earth.crystalmc.crystalDelivery.delivery.DeliveryFailedCode
 import earth.crystalmc.crystalDelivery.util.Message
 import org.bukkit.scheduler.BukkitRunnable
 
+
 class DeliveryScheduler : BukkitRunnable() {
     private val deliveryTime = plugin.config.getInt("delivery_time")
 

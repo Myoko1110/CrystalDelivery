@@ -96,7 +96,8 @@ class DatabaseManager {
 
     fun getValidDeliveries(): List<Delivery> {
         val statement = connection.createStatement()
-        val resultSet = statement.executeQuery("SELECT * FROM delivery WHERE delivered = FALSE AND received = FALSE AND failed_code IS NULL")
+        val resultSet =
+            statement.executeQuery("SELECT * FROM delivery WHERE delivered = FALSE AND received = FALSE AND failed_code IS NULL")
 
         return Delivery.deserializeFromDatabase(resultSet)
     }
@@ -128,9 +129,15 @@ class DatabaseManager {
         return Delivery.deserializeFromDatabase(resultSet)
     }
 
-    fun updateDelivery(id: Int, delivered: Boolean, received: Boolean, failedCode: DeliveryFailedCode? = null): Boolean {
+    fun updateDelivery(
+        id: Int,
+        delivered: Boolean,
+        received: Boolean,
+        failedCode: DeliveryFailedCode? = null
+    ): Boolean {
         try {
-            val statement = connection.prepareStatement("UPDATE delivery SET delivered = ?, received = ?, failed_code = ? WHERE id = ?")
+            val statement =
+                connection.prepareStatement("UPDATE delivery SET delivered = ?, received = ?, failed_code = ? WHERE id = ?")
             statement.setBoolean(1, delivered)
             statement.setBoolean(2, received)
             if (failedCode == null) {

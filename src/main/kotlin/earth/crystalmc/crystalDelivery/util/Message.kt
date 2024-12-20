@@ -97,14 +97,21 @@ enum class Message(private val usePrefix: UsePrefix? = null) {
                 ?.let { replaceColor(it) }.orEmpty()
         }
 
+        fun inventoryConfirmName(fee: String, currency: String): String {
+            return langData.getProperty("InventoryConfirmName")
+                ?.replace("%fee%", fee)
+                ?.replace("%currency%", currency)
+                ?.let { replaceColor(it) }.orEmpty()
+        }
+
         fun replaceColor(msg: String): String {
             return msg.replace(
                 Regex("#([0-9a-fA-F]{6})"),
-                "\u00A7x\u00A7$1\u00A7$2\u00A7$3\u00A7$4\u00A7$5\u00A7$6"
+                "§x§$1§$2§$3§$4§$5§$6"
             ).replace(
                 Regex("#([0-9a-fA-F]{3})"),
-                "\u00A7x\u00A7$1\u00A7$1\u00A7$2\u00A7$2\u00A7$3\u00A7$3"
-            ).replace(Regex("&([0-9a-fk-orA-FK-OR])"), "\u00A7$1")
+                "§x§$1§$1§$2§$2§$3§$3"
+            ).replace(Regex("&([0-9a-fk-orA-FK-OR])"), "§$1")
         }
     }
 }

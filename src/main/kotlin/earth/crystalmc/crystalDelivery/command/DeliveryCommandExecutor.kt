@@ -39,7 +39,7 @@ class DeliveryCommandExecutor : CommandExecutor, TabExecutor {
 
                 val receiver = Bukkit.getOfflinePlayer(args[1])
 
-                SendGUI(sender as Player, receiver).open()
+                SendGUI(sender, receiver).open()
                 return true
             }
 

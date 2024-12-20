@@ -7,6 +7,7 @@ import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.Damageable
 
+
 class DatabaseItem(
     private val amount: Int,
     private val material: String,
